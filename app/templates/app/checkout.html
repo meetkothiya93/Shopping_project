@@ -7,42 +7,65 @@
   <div class="col-sm-6">
     <h4>Order Summary</h4>
     <hr>
-    {% for item in cart_item %}
+    {% for item in cart_items %}
       <div class="card mb-2">
         <div class="card-body">
           <h5>Product: {{item.product.title}}</h5>
           <p>Quantity: {{item.quantity}}</p>
-          <p class="fw-bold">Price:{{item.total_cost}}</p>
+          <p class="fw-bold">Price: {{item.total_cost}}</p>
         </div>
       </div>
-      {% endfor %}
-      <p class="fw-bold">Total cost + Rs. 70 = {{totalamount}}</p>
+    {% endfor %}
+    <p class="fw-bold">Total Cost + Rs. 70 = {{totalamount}}</p>
     <small>Term and Condition: Lorem ipsum dolor sit amet consectetur adipisicing elit. Mollitia, ullam saepe! Iure optio repellat dolor velit, minus rem. Facilis cumque neque numquam laboriosam, accusantium adipisci nisi nihil in et quis?</small>
   </div>
   <div class="col-sm-4 offset-sm-1">
     <h4>Select Shipping Address</h4>
     <hr>
-    
-    <form action="/paymentdone">
+    <form action="/paymentdone/" id="myform">
       {% for ad in add %}
       <div class="card">
         <div class="card-body">
-        <h5>{{ad.name}} </h5>
-        <p>{{ad.locality}},{{ad.city}},{{ad.state}} - {{ad.zipcode}}</p>
+        <h5>{{ad.name}}</h5>
+        <p>{{ad.locality}} ,{{ad.city}},{{ad.state}} - {{ad.zipcode}}</p>
         </div>
       </div>
         <div class="form-check mt-2 mb-5">
-          <input class="form-check-input" type="radio" name="custid" id="custadd{{forloop.counter}}" value="{{ad.id}}"> 
-         
+          <input class="form-check-input" type="radio" name="custid" id="custadd{{forloop.counter}}" value="{{ad.id}}">
           <label class="form-check-label fw-bold" for="">
-            Address: 1 {{forloop.counter}}</label>
+            Address: {{forloop.counter}} </label>
         </div>
         {% endfor %}
         <div class="text-end">
-          <button type="submit" class="btn btn-warning mt-3 px-5 fw-bold">Continue</button>
+         {% comment %} set up a container element for the button {% endcomment %}
+         <div id="paypal-button-container"></div>
         </div>
       </form>
     </div>
   </div>
 </div>
 {% endblock main-content %}
+
+{% block payment-gateway %}
+<script src="https://www.paypal.com/sdk/js?client-id=test&currency=USD"></script>
+<script>
+  // Render the PayPal button into #paypal-button-container
+  paypal.Buttons({
+    createOrder:function(data,action){
+      return action.order.create({
+        purchase_units :[{
+          amount:{
+            value:{{totalamount}}
+          }
+        }]
+      });
+    },
+    onApprove:function(data,action){
+      return action.order.capture().then(function(details){
+        alert("Transactions completed by",details.payer.name.given_name+ '!');
+        document.getElementById("myform").submit(); 
+      });
+    }
+  }).render('#paypal-button-container');
+</script>
+{% endblock payment-gateway %}
